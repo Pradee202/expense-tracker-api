@@ -169,9 +169,10 @@ def get_expense(
     return expense
 
 @app.post("/expenses")
-def add_expense(expense: ExpenseCreate):
-    db = SessionLocal()
-
+def add_expense(
+    expense: ExpenseCreate,
+    db = Depends(get_db)
+):
     new_expense = Expense(
         title=expense.title,
         amount=expense.amount,
@@ -183,31 +184,31 @@ def add_expense(expense: ExpenseCreate):
     db.commit()
     db.refresh(new_expense)
 
-    db.close()
-
     return new_expense
 
 @app.put("/expenses/{expense_id}")
-def update_expense(expense_id: int, expense: ExpenseCreate):
-    db = SessionLocal()
-
+def update_expense(
+    expense_id: int,
+    expense: ExpenseCreate,
+    db = Depends(get_db)
+):
     existing_expense = db.query(Expense).filter(
         Expense.id == expense_id
     ).first()
 
     if existing_expense is None:
-        db.close()
-        raise HTTPException(status_code=404, detail="Expense not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Expense not found"
+        )
 
     existing_expense.title = expense.title
     existing_expense.amount = expense.amount
     existing_expense.category = expense.category
-    existing_expense.date =expense.date
+    existing_expense.date = expense.date
 
     db.commit()
     db.refresh(existing_expense)
-
-    db.close()
 
     return existing_expense
 
