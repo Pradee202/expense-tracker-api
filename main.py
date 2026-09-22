@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from database import engine, Base, SessionLocal
@@ -59,7 +59,7 @@ def update_expense(expense_id: int, expense: ExpenseCreate):
 
     if existing_expense is None:
         db.close()
-        return {"message": "Expense not found"}
+        raise HTTPException(status_code=404, detail="Expense not found")
 
     existing_expense.title = expense.title
     existing_expense.amount = expense.amount
@@ -82,7 +82,7 @@ def delete_expense(expense_id: int):
 
     if existing_expense is None:
         db.close()
-        return {"message": "Expense not found"}
+        raise HTTPException(status_code=404, detail="Expense not found")
 
     db.delete(existing_expense)
     db.commit()
