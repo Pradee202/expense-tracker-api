@@ -213,20 +213,23 @@ def update_expense(
     return existing_expense
 
 @app.delete("/expenses/{expense_id}")
-def delete_expense(expense_id: int):
-    db = SessionLocal()
-
+def delete_expense(
+    expense_id: int,
+    db = Depends(get_db)
+):
     existing_expense = db.query(Expense).filter(
         Expense.id == expense_id
     ).first()
 
     if existing_expense is None:
-        db.close()
-        raise HTTPException(status_code=404, detail="Expense not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Expense not found"
+        )
 
     db.delete(existing_expense)
     db.commit()
 
-    db.close()
-
-    return {"message": "Expense deleted successfully"}
+    return {
+        "message": "Expense deleted successfully"
+    }
