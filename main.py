@@ -12,7 +12,7 @@ Base.metadata.create_all(bind=engine)
 
 class ExpenseCreate(BaseModel):
     title: str = Field(min_length=1)
-    amount: float = Field(gt=0)
+    amount: float = Field(gt=0, le=1000000)
     category: str =Field(min_length=1)
     date: date
 
@@ -32,6 +32,22 @@ def get_expenses():
 
     return expenses
 
+@app.get("/expenses/summary")
+def expense_summary():
+    db = SessionLocal()
+
+    expenses = db.query(Expense).all()
+
+    total_expenses = len(expenses)
+    total_amount = sum(expense.amount for expense in expenses)
+
+    db.close()
+
+    return {
+        "total_expenses": total_expenses,
+        "total_amount": total_amount
+    }
+
 @app.get("/expenses/{expense_id}")
 def get_expense(expense_id: int):
     db = SessionLocal()
@@ -47,6 +63,7 @@ def get_expense(expense_id: int):
     db.close()
 
     return expense
+
 
 @app.post("/expenses")
 def add_expense(expense: ExpenseCreate):
