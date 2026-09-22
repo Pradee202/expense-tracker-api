@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from datetime import date
 
 from database import engine, Base, SessionLocal
 from models import Expense
@@ -13,6 +14,7 @@ class ExpenseCreate(BaseModel):
     title: str
     amount: float
     category: str
+    date: date
 
 
 @app.get("/")
@@ -38,7 +40,8 @@ def add_expense(expense: ExpenseCreate):
     new_expense = Expense(
         title=expense.title,
         amount=expense.amount,
-        category=expense.category
+        category=expense.category,
+        date=expense.date
     )
 
     db.add(new_expense)
@@ -64,6 +67,7 @@ def update_expense(expense_id: int, expense: ExpenseCreate):
     existing_expense.title = expense.title
     existing_expense.amount = expense.amount
     existing_expense.category = expense.category
+    existing_expense.date =expense.date
 
     db.commit()
     db.refresh(existing_expense)
