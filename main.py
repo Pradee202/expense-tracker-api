@@ -21,12 +21,29 @@ class ExpenseCreate(BaseModel):
 def home():
     return {"message": "Expense Tracker API is running!"}
 
-
 @app.get("/expenses")
-def get_expenses():
+def get_expenses(sort: str = "date_desc"):
     db = SessionLocal()
 
-    expenses = db.query(Expense).all()
+    if sort == "amount_desc":
+        expenses = db.query(Expense).order_by(
+            Expense.amount.desc()
+        ).all()
+
+    elif sort == "amount_asc":
+        expenses = db.query(Expense).order_by(
+            Expense.amount.asc()
+        ).all()
+
+    elif sort == "date_asc":
+        expenses = db.query(Expense).order_by(
+            Expense.date.asc()
+        ).all()
+
+    else:
+        expenses = db.query(Expense).order_by(
+            Expense.date.desc()
+        ).all()
 
     db.close()
 
@@ -65,6 +82,7 @@ def category_summary():
     db.close()
 
     return summary
+
 @app.get("/expenses/summary/month")
 def monthly_summary(year: int, month: int):
     db = SessionLocal()
@@ -114,6 +132,7 @@ def search_expenses(keyword: str):
     db.close()
 
     return expenses
+
 @app.get("/expenses/filter/category")
 def filter_by_category(category: str):
     db = SessionLocal()
