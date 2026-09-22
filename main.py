@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 from datetime import date
 
 from database import engine, Base, SessionLocal
@@ -11,9 +11,9 @@ Base.metadata.create_all(bind=engine)
 
 
 class ExpenseCreate(BaseModel):
-    title: str
-    amount: float
-    category: str
+    title: str = Field(min_length=1)
+    amount: float = Field(gt=0)
+    category: str =Field(min_length=1)
     date: date
 
 
