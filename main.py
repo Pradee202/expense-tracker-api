@@ -65,6 +65,44 @@ def category_summary():
     db.close()
 
     return summary
+@app.get("/expenses/summary/month")
+def monthly_summary(year: int, month: int):
+    db = SessionLocal()
+
+    expenses = db.query(Expense).all()
+
+    monthly_expenses = [
+        expense for expense in expenses
+        if expense.date.year == year and expense.date.month == month
+    ]
+
+    total_expenses = len(monthly_expenses)
+    total_amount = sum(
+        expense.amount for expense in monthly_expenses
+    )
+
+    db.close()
+
+    return {
+        "year": year,
+        "month": month,
+        "total_expenses": total_expenses,
+        "total_amount": total_amount
+    }
+
+@app.get("/expenses/filter")
+def filter_expenses(start_date: date, end_date: date):
+    db = SessionLocal()
+
+    expenses = db.query(Expense).filter(
+        Expense.date >= start_date,
+        Expense.date <= end_date
+    ).all()
+
+    db.close()
+
+    return expenses
+
 
 @app.get("/expenses/{expense_id}")
 def get_expense(expense_id: int):
