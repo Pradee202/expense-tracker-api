@@ -48,6 +48,24 @@ def expense_summary():
         "total_amount": total_amount
     }
 
+@app.get("/expenses/summary/category")
+def category_summary():
+    db = SessionLocal()
+
+    expenses = db.query(Expense).all()
+
+    summary = {}
+
+    for expense in expenses:
+        if expense.category in summary:
+            summary[expense.category] += expense.amount
+        else:
+            summary[expense.category] = expense.amount
+
+    db.close()
+
+    return summary
+
 @app.get("/expenses/{expense_id}")
 def get_expense(expense_id: int):
     db = SessionLocal()
