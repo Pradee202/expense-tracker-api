@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query,Depends
 from pydantic import BaseModel,Field
 from datetime import date
 
@@ -6,6 +6,12 @@ from database import engine, Base, SessionLocal
 from models import Expense
 
 app = FastAPI()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 Base.metadata.create_all(bind=engine)
 
@@ -25,34 +31,29 @@ def home():
 def get_expenses(
     sort: str = "date_desc",
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100)
+    limit: int = Query(10, ge=1, le=100),
+    db = Depends(get_db)
 ):
-    db = SessionLocal()
+    if sort == "amount_desc":
+        query = db.query(Expense).order_by(
+            Expense.amount.desc()
+        )
+    elif sort == "amount_asc":
+        query = db.query(Expense).order_by(
+            Expense.amount.asc()
+        )
+    elif sort == "date_asc":
+        query = db.query(Expense).order_by(
+            Expense.date.asc()
+        )
+    else:
+        query = db.query(Expense).order_by(
+            Expense.date.desc()
+        )
 
-    try:
-        if sort == "amount_desc":
-            query = db.query(Expense).order_by(
-                Expense.amount.desc()
-            )
-        elif sort == "amount_asc":
-            query = db.query(Expense).order_by(
-                Expense.amount.asc()
-            )
-        elif sort == "date_asc":
-            query = db.query(Expense).order_by(
-                Expense.date.asc()
-            )
-        else:
-            query = db.query(Expense).order_by(
-                Expense.date.desc()
-            )
+    expenses = query.offset(skip).limit(limit).all()
 
-        expenses = query.offset(skip).limit(limit).all()
-
-        return expenses
-
-    finally:
-        db.close()
+    return expenses
 
 @app.get("/expenses/summary")
 def expense_summary():
@@ -151,25 +152,21 @@ def filter_by_category(category: str):
     return expenses
 
 @app.get("/expenses/{expense_id}")
-def get_expense(expense_id: int):
-    db = SessionLocal()
+def get_expense(
+    expense_id: int,
+    db = Depends(get_db)
+):
+    expense = db.query(Expense).filter(
+        Expense.id == expense_id
+    ).first()
 
-    try:
-        expense = db.query(Expense).filter(
-            Expense.id == expense_id
-        ).first()
+    if expense is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Expense not found"
+        )
 
-        if expense is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Expense not found"
-            )
-
-        return expense
-
-    finally:
-        db.close()
-
+    return expense
 
 @app.post("/expenses")
 def add_expense(expense: ExpenseCreate):
