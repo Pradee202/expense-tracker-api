@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel,Field
 from datetime import date
 
@@ -22,28 +22,31 @@ def home():
     return {"message": "Expense Tracker API is running!"}
 
 @app.get("/expenses")
-def get_expenses(sort: str = "date_desc"):
+def get_expenses(
+    sort: str = "date_desc",
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10,ge=1, le=100)
+):
     db = SessionLocal()
 
     if sort == "amount_desc":
-        expenses = db.query(Expense).order_by(
+        query = db.query(Expense).order_by(
             Expense.amount.desc()
-        ).all()
-
+        )
     elif sort == "amount_asc":
-        expenses = db.query(Expense).order_by(
+        query = db.query(Expense).order_by(
             Expense.amount.asc()
-        ).all()
-
+        )
     elif sort == "date_asc":
-        expenses = db.query(Expense).order_by(
+        query = db.query(Expense).order_by(
             Expense.date.asc()
-        ).all()
-
+        )
     else:
-        expenses = db.query(Expense).order_by(
+        query = db.query(Expense).order_by(
             Expense.date.desc()
-        ).all()
+        )
+
+    expenses = query.offset(skip).limit(limit).all()
 
     db.close()
 
