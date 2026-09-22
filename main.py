@@ -25,32 +25,34 @@ def home():
 def get_expenses(
     sort: str = "date_desc",
     skip: int = Query(0, ge=0),
-    limit: int = Query(10,ge=1, le=100)
+    limit: int = Query(10, ge=1, le=100)
 ):
     db = SessionLocal()
 
-    if sort == "amount_desc":
-        query = db.query(Expense).order_by(
-            Expense.amount.desc()
-        )
-    elif sort == "amount_asc":
-        query = db.query(Expense).order_by(
-            Expense.amount.asc()
-        )
-    elif sort == "date_asc":
-        query = db.query(Expense).order_by(
-            Expense.date.asc()
-        )
-    else:
-        query = db.query(Expense).order_by(
-            Expense.date.desc()
-        )
+    try:
+        if sort == "amount_desc":
+            query = db.query(Expense).order_by(
+                Expense.amount.desc()
+            )
+        elif sort == "amount_asc":
+            query = db.query(Expense).order_by(
+                Expense.amount.asc()
+            )
+        elif sort == "date_asc":
+            query = db.query(Expense).order_by(
+                Expense.date.asc()
+            )
+        else:
+            query = db.query(Expense).order_by(
+                Expense.date.desc()
+            )
 
-    expenses = query.offset(skip).limit(limit).all()
+        expenses = query.offset(skip).limit(limit).all()
 
-    db.close()
+        return expenses
 
-    return expenses
+    finally:
+        db.close()
 
 @app.get("/expenses/summary")
 def expense_summary():
@@ -152,17 +154,21 @@ def filter_by_category(category: str):
 def get_expense(expense_id: int):
     db = SessionLocal()
 
-    expense = db.query(Expense).filter(
-        Expense.id == expense_id
-    ).first()
+    try:
+        expense = db.query(Expense).filter(
+            Expense.id == expense_id
+        ).first()
 
-    if expense is None:
+        if expense is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Expense not found"
+            )
+
+        return expense
+
+    finally:
         db.close()
-        raise HTTPException(status_code=404, detail="Expense not found")
-
-    db.close()
-
-    return expense
 
 
 @app.post("/expenses")
