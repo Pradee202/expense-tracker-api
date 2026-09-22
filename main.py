@@ -32,6 +32,21 @@ def get_expenses():
 
     return expenses
 
+@app.get("/expenses/{expense_id}")
+def get_expense(expense_id: int):
+    db = SessionLocal()
+
+    expense = db.query(Expense).filter(
+        Expense.id == expense_id
+    ).first()
+
+    if expense is None:
+        db.close()
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    db.close()
+
+    return expense
 
 @app.post("/expenses")
 def add_expense(expense: ExpenseCreate):
