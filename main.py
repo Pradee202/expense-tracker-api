@@ -103,6 +103,28 @@ def filter_expenses(start_date: date, end_date: date):
 
     return expenses
 
+@app.get("/expenses/search")
+def search_expenses(keyword: str):
+    db = SessionLocal()
+
+    expenses = db.query(Expense).filter(
+        Expense.title.ilike(f"%{keyword}%")
+    ).all()
+
+    db.close()
+
+    return expenses
+@app.get("/expenses/filter/category")
+def filter_by_category(category: str):
+    db = SessionLocal()
+
+    expenses = db.query(Expense).filter(
+        Expense.category.ilike(category)
+    ).all()
+
+    db.close()
+
+    return expenses
 
 @app.get("/expenses/{expense_id}")
 def get_expense(expense_id: int):
